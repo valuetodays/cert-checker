@@ -16,6 +16,7 @@ type Config struct {
 		Email    notifier.EmailNotifier    `yaml:"email"`
 		DingTalk notifier.DingTalkNotifier `yaml:"dingtalk"`
 		WeCom    notifier.WeComNotifier    `yaml:"wecom"`
+		Bark    notifier.BarkNotifier    `yaml:"bark"`
 	} `yaml:"notifiers"`
 }
 

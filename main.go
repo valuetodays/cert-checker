@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("加载配置失败: %v", err)
 	}
 	// 2. 初始化通知器
-	ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom)
+	ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom, &cfg.Notifiers.Bark)
 
 	// 3. 检查每个域名的证书
 	for _, domain := range cfg.Domains {
