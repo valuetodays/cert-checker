@@ -1,0 +1,46 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # 你如果推 tag，GitHub Actions 会自动得到 ${{ github.ref_name }}。
+        # git tag v1.2.3
+        # git push origin v1.2.3
+      - name: Set VERSION env
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23.1"
+
+      - name: Build binaries
+        run: |
+          mkdir -p build
+          GOOS=windows GOARCH=amd64 go build -o build/cert-checker-${VERSION}-win.exe main.go
+          GOOS=linux   GOARCH=amd64 go build -o build/cert-checker-${VERSION}-linux main.go
+
+      - name: Generate sha256
+        run: |
+          cd build
+          sha256sum cert-checker-${VERSION}-win.exe   > cert-checker-${VERSION}-win.exe.sha256
+          sha256sum cert-checker-${VERSION}-linux     > cert-checker-${VERSION}-linux.sha256
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/cert-checker-${{ env.VERSION }}-win.exe
+            build/cert-checker-${{ env.VERSION }}-win.exe.sha256
+            build/cert-checker-${{ env.VERSION }}-linux
+            build/cert-checker-${{ env.VERSION }}-linux.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
