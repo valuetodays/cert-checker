@@ -8,10 +8,10 @@ import (
 )
 
 type BarkNotifier struct {
-	Enabled          bool     `yaml:"enabled"`
-	ServerUrl          string   `yaml:"server_url"`
-	DeviceKey          string   `yaml:"device_key"`
-	Group          string   `yaml:"group"`
+	Enabled   bool   `yaml:"enabled"`
+	ServerUrl string `yaml:"server_url"`
+	DeviceKey string `yaml:"device_key"`
+	Group     string `yaml:"group"`
 }
 
 func (n *BarkNotifier) Send(msg AlertMessage) error {
@@ -20,9 +20,9 @@ func (n *BarkNotifier) Send(msg AlertMessage) error {
 	}
 	payload := map[string]interface{}{
 		"device_key": n.DeviceKey,
-		"title": 'SSL证书到期提醒: ' + msg.Domain,
-		"body": 'SSL证书到期剩余天数: ' + msg.DaysLeft,
-		"group": n.Group,
+		"title":      "SSL证书到期提醒: " + msg.Domain,
+		"body":       fmt.Sprintf("SSL证书到期剩余天数: %d", msg.DaysLeft),
+		"group":      n.Group,
 	}
 
 	data, err := json.Marshal(payload)
