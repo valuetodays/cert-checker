@@ -10,7 +10,8 @@ import (
 type WeComNotifier struct {
 	Enabled          bool     `yaml:"enabled"`
 	Webhook          string   `yaml:"webhook"`
-	MentionedMobiles []string `yaml:"mentioned_mobiles"`
+	MentionedMobiles []string `yaml:"mentioned_mobile_list"`
+	MentionedList    []string `yaml:"mentioned_list"`
 }
 
 func (n *WeComNotifier) Send(msg AlertMessage) error {
@@ -22,6 +23,7 @@ func (n *WeComNotifier) Send(msg AlertMessage) error {
 		"text": map[string]interface{}{
 			"content":               msg.String(),
 			"mentioned_mobile_list": n.MentionedMobiles,
+			"mentioned_list": n.MentionedList,
 		},
 	}
 	data, err := json.Marshal(payload)

@@ -27,6 +27,8 @@ notifiers:
     webhook: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=f6019e59-********-131e764
     mentioned_mobile_list: # 要@的手机号
       - 18700000000
+    mentioned_list: # 要@的用户ID
+      - zhangsan
   bark:
     enabled: false
     server_url: https://api.day.app
