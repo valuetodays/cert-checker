@@ -24,14 +24,15 @@ jobs:
       - name: Build binaries
         run: |
           mkdir -p build
-          GOOS=windows GOARCH=amd64 go build -o build/cert-checker-${VERSION}-win.exe main.go
-          GOOS=linux   GOARCH=amd64 go build -o build/cert-checker-${VERSION}-linux main.go
+          go mod tidy
+          GOOS=windows GOARCH=amd64 go build -o build/cert-checker-${{ env.VERSION }}-win.exe main.go
+          GOOS=linux   GOARCH=amd64 go build -o build/cert-checker-${{ env.VERSION }}-linux main.go
 
       - name: Generate sha256
         run: |
           cd build
-          sha256sum cert-checker-${VERSION}-win.exe   > cert-checker-${VERSION}-win.exe.sha256
-          sha256sum cert-checker-${VERSION}-linux     > cert-checker-${VERSION}-linux.sha256
+          sha256sum cert-checker-${{ env.VERSION }}-win.exe   > cert-checker-${{ env.VERSION }}-win.exe.sha256
+          sha256sum cert-checker-${{ env.VERSION }}-linux     > cert-checker-${{ env.VERSION }}-linux.sha256
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
