@@ -11,8 +11,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
-
 	"github.com/robfig/cron/v3"
 )
 
