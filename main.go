@@ -5,41 +5,88 @@ import (
 	"cert-checker/internal/config"
 	"cert-checker/internal/notifier"
 	"flag"
+	"io"
 	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
 	configFile := flag.String("config", "config/config.yaml", "Path to config file")
 	flag.Parse()
 
-	// 1. 加载配置
+	// 加载配置
 	cfg, err := config.Load(*configFile)
 	if err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
-	// 2. 初始化通知器
-	ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom, &cfg.Notifiers.Bark)
 
-	// 3. 检查每个域名的证书
-	for _, domain := range cfg.Domains {
-		info, err := checker.CheckCert(domain, cfg.Alert.Threshold)
-		if err != nil {
-			continue
-		}
+	// 日志输出到文件 + 控制台
+	logFile, err := os.OpenFile("cert-checker.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("无法打开日志文件: %v", err)
+	}
+	defer logFile.Close()
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
 
-		log.Printf("域名: %-30s 过期时间: %s 剩余天数: %d\n",
-			domain,
-			info.ExpiryDate.Format("2006-01-02"),
-			info.ExpiresIn)
+	// 初始化 cron
+	c := cron.New(cron.WithSeconds())
 
-		if info.IsExpired || info.IsWarning {
-			msg := notifier.AlertMessage{
-				Domain:     domain,
-				ExpiryDate: info.ExpiryDate.Format("2006-01-02 15:04:05"),
-				DaysLeft:   info.ExpiresIn,
+	// 定义检查函数
+	checkDomains := func() {
+		ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom, &cfg.Notifiers.Bark)
+		for _, domain := range cfg.Domains {
+			info, err := checker.CheckCert(domain, cfg.Alert.Threshold)
+			if err != nil {
+				log.Printf("检查域名 %s 失败: %v", domain, err)
+				continue
 			}
 
-			_ = ntf.Send(msg)
+			log.Printf("域名: %-30s 过期时间: %s 剩余天数: %d\n",
+				domain,
+				info.ExpiryDate.Format("2006-01-02"),
+				info.ExpiresIn)
+
+			if info.IsExpired || info.IsWarning {
+				msg := notifier.AlertMessage{
+					Domain:     domain,
+					ExpiryDate: info.ExpiryDate.Format("2006-01-02 15:04:05"),
+					DaysLeft:   info.ExpiresIn,
+				}
+				if err := ntf.Send(msg); err != nil {
+					log.Printf("发送通知失败: %v", err)
+				}
+			}
 		}
 	}
+
+	// 启动 cron 定时任务
+	_, _ = c.AddFunc("0 0 10 * * ?", checkDomains)
+	c.Start()
+	log.Println("证书监控服务已启动...")
+
+	// 程序启动时立即执行一次
+	go checkDomains()
+
+	// 等待退出信号
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		sig := <-sigs
+		log.Printf("接收到信号 %v，准备退出...", sig)
+		c.Stop() // 停止 cron
+	}()
+
+	wg.Wait()
+	log.Println("证书监控服务已退出。")
 }
