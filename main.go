@@ -97,10 +97,10 @@ func getDomains(cfg *config.Config) []string {
 	domainConfig := cfg.DomainConfig
 	enabledDomainUrl := domainConfig.EnabledDomainUrl
 	if enabledDomainUrl {
-		return domainConfig.List
+		url := domainConfig.DomainUrl
+		return getDomainsByUrl(url)
 	}
-	url := domainConfig.DomainUrl
-	return getDomainsByUrl(url)
+	return domainConfig.List
 }
 
 func getDomainsByUrl(url string) []string {
@@ -127,7 +127,7 @@ func getDomainsByUrl(url string) []string {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("body: %v\n", body)
+	log.Printf("body: %v\n", string(body))
 
 	// 解析 JSON
 	var result Response
