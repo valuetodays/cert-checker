@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"cert-checker/internal/checker"
 	"cert-checker/internal/config"
 	"cert-checker/internal/notifier"
+	"encoding/json"
 	"flag"
+	"github.com/robfig/cron/v3"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -36,10 +39,11 @@ func main() {
 	// 初始化 cron
 	c := cron.New(cron.WithSeconds())
 
+	ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom, &cfg.Notifiers.Bark)
 	// 定义检查函数
 	checkDomains := func() {
-		ntf := notifier.NewNotifier(&cfg.Notifiers.Email, &cfg.Notifiers.DingTalk, &cfg.Notifiers.WeCom, &cfg.Notifiers.Bark)
-		for _, domain := range cfg.Domains {
+		domains := getDomains(cfg)
+		for _, domain := range domains {
 			info, err := checker.CheckCert(domain, cfg.Alert.Threshold)
 			if err != nil {
 				log.Printf("检查域名 %s 失败: %v", domain, err)
@@ -87,4 +91,54 @@ func main() {
 
 	wg.Wait()
 	log.Println("证书监控服务已退出。")
+}
+
+func getDomains(cfg *config.Config) []string {
+	domainConfig := cfg.DomainConfig
+	enabledDomainUrl := domainConfig.EnabledDomainUrl
+	if enabledDomainUrl {
+		return domainConfig.List
+	}
+	url := domainConfig.DomainUrl
+	return getDomainsByUrl(url)
+}
+
+func getDomainsByUrl(url string) []string {
+	// POST 参数
+	payload := map[string]interface{}{
+		"key1": "value1",
+	}
+
+	// 将 payload 转为 JSON
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+
+	// 创建 POST 请求
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	// 读取响应 body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("body: %v\n", body)
+
+	// 解析 JSON
+	var result Response
+	if err := json.Unmarshal(body, &result); err != nil {
+		panic(err)
+	}
+	return result.Data
+}
+
+type Response struct {
+	Code int      `json:"code"`
+	Msg  string   `json:"msg"`
+	Data []string `json:"data"`
 }

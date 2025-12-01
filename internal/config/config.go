@@ -7,8 +7,12 @@ import (
 )
 
 type Config struct {
-	Domains []string `yaml:"domains"`
-	Alert   struct {
+	DomainConfig struct {
+		EnabledDomainUrl bool     `yaml:"enabled_domain_url"`
+		DomainUrl        string   `yaml:"domain_url"`
+		List             []string `yaml:"list"`
+	} `yaml:"domain_config"`
+	Alert struct {
 		Threshold      int `yaml:"threshold"`
 		RepeatInterval int `yaml:"repeat_interval"`
 	} `yaml:"alert"`
@@ -16,7 +20,7 @@ type Config struct {
 		Email    notifier.EmailNotifier    `yaml:"email"`
 		DingTalk notifier.DingTalkNotifier `yaml:"dingtalk"`
 		WeCom    notifier.WeComNotifier    `yaml:"wecom"`
-		Bark    notifier.BarkNotifier    `yaml:"bark"`
+		Bark     notifier.BarkNotifier     `yaml:"bark"`
 	} `yaml:"notifiers"`
 }
 

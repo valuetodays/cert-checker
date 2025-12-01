@@ -1,7 +1,11 @@
 # config/config.yaml
-domains: # 要监控的域名列表
-  - www.baidu.com:443
-  - www.qq.com:443
+domain_config:
+  # 是否启用域名url，是-从domain_url里获取域名列表；否-使用domains作为域名列表
+  enabled_domain_url: true
+  domain_url: https://www.example.com/api/domain_list
+  list: # 要监控的域名列表
+    - "www.baidu.com:443"
+    - "www.qq.com"
 alert:
   threshold: 14               # 预警天数
   repeat_interval: 24        # 重复通知间隔(小时)
