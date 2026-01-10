@@ -38,10 +38,45 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/cert-checker-${{ env.VERSION }}-win.exe
-            build/cert-checker-${{ env.VERSION }}-win.exe.sha256
-            build/cert-checker-${{ env.VERSION }}-linux
-            build/cert-checker-${{ env.VERSION }}-linux.sha256
+            build/cert-checker-*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          # 推荐用PAT而非密码
+          password: ${{ secrets.DOCKER_HUB_TOKEN }} 
+          
+      # ============================
+      # Docker Hub 推送开始
+      # ============================
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./dockerfiles/Dockerfile # 指定Dockerfile路径
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/cert-checker:${{ env.VERSION }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/cert-checker:latest
+            
+      # ============================
+      # Docker Hub 推送结束
+      # ============================
+      
