@@ -9,9 +9,27 @@ CertChecker 是一款基于 Go 的轻量级、易配置的开源工具，用于�
 - 通过配置文件定义检测规则
 - 适合服务器、容器、定时任务场景
 
----
 
 ## 镜像地址
 
 Docker Hub：https://hub.docker.com/r/193002818/cert-checker
 
+示例docker-compose.yaml如下:
+
+```
+version: "3"
+
+services:
+  cert-checker:
+    image: 193002818/cert-checker:v1.0.12-2026-01-10T18_27_36
+    container_name: cert-checker
+    restart: unless-stopped
+    volumes:
+      - "./cert-checker-config.yaml:/app/cert-checker-config.yaml:ro" 
+      - /etc/localtime:/etc/localtime
+      - /usr/share/zoneinfo:/usr/share/zoneinfo
+    environment:
+      - TZ=Asia/Shanghai
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+```
