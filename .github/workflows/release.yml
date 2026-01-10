@@ -68,7 +68,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/cert-checker:${{ env.VERSION }}
-            ${{ secrets.DOCKER_HUB_TOKEN }}/cert-checker:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/cert-checker:latest
             
       # ============================
       # Docker Hub 推送结束
