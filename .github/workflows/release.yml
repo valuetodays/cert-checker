@@ -27,6 +27,9 @@ jobs:
           go mod tidy
           GOOS=windows GOARCH=amd64 go build -o build/cert-checker-${{ env.VERSION }}-win.exe main.go
           GOOS=linux   GOARCH=amd64 go build -o build/cert-checker-${{ env.VERSION }}-linux main.go
+      - name: Prepare binary for Docker
+        run: |
+          cp build/cert-checker-${{ env.VERSION }}-linux cert-checker-linux
 
       - name: Generate sha256
         run: |
@@ -58,7 +61,12 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           # 推荐用PAT而非密码
           password: ${{ secrets.DOCKER_HUB_TOKEN }} 
-
+          
+      - name: Set build timestamp
+        run: |
+          TS=$(date '+%Y-%m-%dT%H_%M_%S')
+          echo "BUILD_TS=$TS" >> $GITHUB_ENV
+          
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -68,6 +76,7 @@ jobs:
           platforms: linux/amd64
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/cert-checker:${{ env.VERSION }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/cert-checker:${{ env.VERSION }}-${{ env.BUILD_TS }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/cert-checker:latest
             
       # ============================

@@ -29,8 +29,7 @@ RUN apt-get update && \
     update-ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-build/cert-checker-${{ env.VERSION }}-linux 
-COPY ./build/cert-checker-${{ env.VERSION }}-linux /app/cert-checker-linux
+COPY ./cert-checker-linux /app/cert-checker-linux
 COPY ./dockerfiles/cert-checker-config.yaml /app/
 COPY ./dockerfiles/entrypoint.sh /app/entrypoint.sh
 
